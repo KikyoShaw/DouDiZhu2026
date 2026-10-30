@@ -1,0 +1,21 @@
+[package]
+name = "doudizhu2026"
+version = "0.1.0"
+description = "Independent three-player Dou Di Zhu desktop game"
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+name = "doudizhu_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["net", "io-util", "sync", "time", "rt-multi-thread"] }
+rand = "0.8"
