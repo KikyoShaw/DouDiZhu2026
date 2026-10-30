@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 import type { Settings } from './types'
 import AppDialog from './components/AppDialog.vue'
 import AppIcon from './components/AppIcon.vue'
@@ -28,6 +29,7 @@ const roomTab = ref<'host' | 'join'>('host')
 const roomDraft = reactive({ playerName: '我', bidMode: 'score' as Settings['bidMode'], baseScore: 1, turnSeconds: 20, port: 9528, address: '' })
 const roomAddressInput = ref<HTMLInputElement | null>(null)
 const pendingSettings = ref(false)
+const openingRepository = ref(false)
 const seenResults = new Set<string>()
 
 const rightSeat = computed(() => (localSeat.value + 1) % 3)
@@ -113,6 +115,14 @@ watch(() => game.value, (value, previous) => {
   if (dialog.value === 'result' && (value.stage !== 'finished' || !value.result)) dialog.value = null
 })
 watch(canSelect, enabled => { if (!enabled) selected.value = [] })
+
+async function openRepository() {
+  if (openingRepository.value) return
+  openingRepository.value = true
+  try { await invoke('open_repository') }
+  catch (error) { notify(error instanceof Error ? error.message : String(error), true) }
+  finally { openingRepository.value = false }
+}
 
 function openDialog(value: Exclude<Dialog, null>) {
   commandError.value = ''
@@ -251,6 +261,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', keydown))
         <button class="icon-button" :disabled="!game || preferencesBusy" :title="game?.settings.sound ? '关闭音效' : '开启音效'" :aria-label="game?.settings.sound ? '关闭音效' : '开启音效'" :aria-pressed="game?.settings.sound" @click="toggleSound"><AppIcon :name="game?.settings.sound ? 'volume' : 'mute'" :size="19" /></button>
         <button class="icon-button" :disabled="!game" title="设置" aria-label="设置" @click="openDialog('settings')"><AppIcon name="settings" :size="19" /></button>
         <button class="icon-button" title="游戏规则" aria-label="游戏规则" @click="openDialog('rules')"><AppIcon name="book" :size="19" /></button>
+        <button type="button" class="toolbar-button" :disabled="openingRepository" title="在默认浏览器中打开 GitHub 项目仓库" aria-label="打开 GitHub 项目仓库" @click="openRepository"><AppIcon name="github" :size="18" /><span>GitHub</span></button>
       </nav>
     </header>
 

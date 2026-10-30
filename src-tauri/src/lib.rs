@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use tauri::{Manager, State};
+use tauri_plugin_opener::OpenerExt;
 
 mod game;
 mod network;
@@ -48,9 +49,17 @@ fn join_lan(hub: State<'_, Arc<Hub>>, address: String, port: u16, player_name: S
 #[tauri::command]
 fn leave_lan(hub: State<'_, Arc<Hub>>) -> Result<Snapshot, String> { hub.leave() }
 
+#[tauri::command]
+fn open_repository(app: tauri::AppHandle) -> Result<(), String> {
+    app.opener()
+        .open_url("https://github.com/KikyoShaw/DouDiZhu2026", None::<&str>)
+        .map_err(|error| format!("无法打开项目仓库：{error}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let hub = Hub::new(app.handle().clone(), app.path().app_config_dir()?);
             app.manage(hub.clone());
@@ -59,7 +68,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            get_snapshot, new_match, update_preferences, game_action, get_hint, host_lan, join_lan, leave_lan,
+            get_snapshot, new_match, update_preferences, game_action, get_hint, host_lan, join_lan, leave_lan, open_repository,
         ])
         .build(tauri::generate_context!())
         .expect("无法启动斗地主")
